@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>automata</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library automata</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Lists.List</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Init.Nat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Lia</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Nat</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Program.Equality</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">ListNotations</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab1"></a><h1 class="section">Definitions</h1>
+
+<div class="paragraph"> </div>
+
+ Definition of DFAs 
+</div>
+<div class="code">
+<span class="id" title="keyword">Record</span> <span class="id" title="var">dfa</span> (<span class="id" title="var">S</span> <span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) := <span class="id" title="var">DFA</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">initial_state</span> : <span class="id" title="var">S</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">is_final</span> : <span class="id" title="var">S</span> -&gt; <span class="id" title="var">bool</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">next</span> : <span class="id" title="var">S</span> -&gt; <span class="id" title="var">A</span> -&gt; <span class="id" title="var">S</span><br/>
+}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Run a DFA <span class="inlinecode"><span class="id" title="var">m</span></span> from state <span class="inlinecode"><span class="id" title="var">q</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">run_from</span> (<span class="id" title="var">S</span> <span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) (<span class="id" title="var">q</span> : <span class="id" title="var">S</span>) (<span class="id" title="var">w</span> : <span class="id" title="var">list</span> <span class="id" title="var">A</span>) : <span class="id" title="var">S</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">fold_left</span> (<span class="id" title="var">next</span> <span class="id" title="var">m</span>) <span class="id" title="var">w</span> <span class="id" title="var">q</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  Check if a word <span class="inlinecode"><span class="id" title="var">w</span></span> is accepted by a dfa <span class="inlinecode"><span class="id" title="var">m</span></span>.
+  <span class="inlinecode"><span class="id" title="var">accept</span></span> <span class="inlinecode"><span class="id" title="var">m</span></span> can be thought of as <span class="inlinecode"><span class="id" title="var">m</span></span>'s denotational semantic.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <span class="id" title="var">accept</span> (<span class="id" title="var">S</span> <span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) (<span class="id" title="var">w</span> : <span class="id" title="var">list</span> <span class="id" title="var">A</span>) : <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">is_final</span> <span class="id" title="var">m</span> (<span class="id" title="var">run_from</span> <span class="id" title="var">m</span> (<span class="id" title="var">initial_state</span> <span class="id" title="var">m</span>) <span class="id" title="var">w</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  Inductive predicate indicating the existence of a path (<span class="inlinecode"><span class="id" title="var">q</span></span> <span class="inlinecode"><span class="id" title="var">w</span></span> <span class="inlinecode"><span class="id" title="var">q'</span></span>) wrt <span class="inlinecode"><span class="id" title="var">m</span></span>.
+  Usefull for proofs requiring to keep track of the states
+  taken by the dfa.
+  <span class="inlinecode"><span class="id" title="var">path</span></span> <span class="inlinecode"><span class="id" title="var">m</span></span> can be thought of as <span class="inlinecode"><span class="id" title="var">m</span></span>'s operational semantic.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <span class="id" title="var">path</span> (<span class="id" title="var">S</span> <span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) : <span class="id" title="var">S</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">A</span> -&gt; <span class="id" title="var">S</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">epsilon_path</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">q</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q</span> [] <span class="id" title="var">q</span><br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">unit_path</span>  : <span class="id" title="keyword">forall</span> <span class="id" title="var">q</span> <span class="id" title="var">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q</span> [<span class="id" title="var">c</span>] (<span class="id" title="var">next</span> <span class="id" title="var">m</span> <span class="id" title="var">q</span> <span class="id" title="var">c</span>)<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;| <span class="id" title="var">trans_path</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> <span class="id" title="var">q3</span> <span class="id" title="var">w1</span> <span class="id" title="var">w2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> <span class="id" title="var">w1</span> <span class="id" title="var">q2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q2</span> <span class="id" title="var">w2</span> <span class="id" title="var">q3</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> (<span class="id" title="var">w1</span> ++ <span class="id" title="var">w2</span>) <span class="id" title="var">q3</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab2"></a><h1 class="section">Usefull properties</h1>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+  If there exists a path (<span class="inlinecode"><span class="id" title="var">q'</span></span> <span class="inlinecode"><span class="id" title="var">w</span></span> <span class="inlinecode"><span class="id" title="var">q''</span></span>) and if
+  (q, a, q') is a transition, then there exists
+  a path (<span class="inlinecode"><span class="id" title="var">q</span></span> <span class="inlinecode"><span class="id" title="var">a.w</span></span> <span class="inlinecode"><span class="id" title="var">q''</span></span>)
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">cons_path</span>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> (<span class="id" title="var">S</span> <span class="id" title="var">A</span> : <span class="id" title="keyword">Type</span>) (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) <span class="id" title="var">a</span> <span class="id" title="var">w</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> (<span class="id" title="var">next</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> <span class="id" title="var">a</span>) <span class="id" title="var">w</span> <span class="id" title="var">q2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> (<span class="id" title="var">a</span>::<span class="id" title="var">w</span>) <span class="id" title="var">q2</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="var">unit_path</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">replace</span> ([<span class="id" title="var">a</span>; <span class="id" title="var">c</span>]) <span class="id" title="keyword">with</span> ([<span class="id" title="var">a</span>] ++ [<span class="id" title="var">c</span>]) <span class="id" title="tactic">by</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <span class="id" title="var">trans_path</span>; <span class="id" title="tactic">apply</span> <span class="id" title="var">unit_path</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">replace</span> (<span class="id" title="var">a</span> :: <span class="id" title="var">w1</span> ++ <span class="id" title="var">w2</span>) <span class="id" title="keyword">with</span> ([<span class="id" title="var">a</span>] ++ <span class="id" title="var">w1</span> ++ <span class="id" title="var">w2</span>) <span class="id" title="tactic">by</span> <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <span class="id" title="var">trans_path</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <span class="id" title="var">unit_path</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <span class="id" title="var">trans_path</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">apply</span> <span class="id" title="var">H0</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> &quot;( m , q1 , w ) --&gt; q2" := (<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> <span class="id" title="var">w</span> <span class="id" title="var">q2</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 80).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  If runing <span class="inlinecode"><span class="id" title="var">m</span></span> on a word <span class="inlinecode"><span class="id" title="var">w</span></span> from state <span class="inlinecode"><span class="id" title="var">q</span></span> places <span class="inlinecode"><span class="id" title="var">m</span></span> 
+  in a new state <span class="inlinecode"><span class="id" title="var">q'</span></span>, then there exists a path (<span class="inlinecode"><span class="id" title="var">q</span></span> <span class="inlinecode"><span class="id" title="var">w</span></span> <span class="inlinecode"><span class="id" title="var">q'</span></span>)
+  and reciprocally.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <span class="id" title="var">run_from_path</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span> (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) <span class="id" title="var">w</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">run_from</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> <span class="id" title="var">w</span> = <span class="id" title="var">q2</span><br/>
+&nbsp;&nbsp;&lt;-&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">path</span> <span class="id" title="var">m</span> <span class="id" title="var">q1</span> <span class="id" title="var">w</span> <span class="id" title="var">q2</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">w</span>; <span class="id" title="tactic">intros</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">elim</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">epsilon_path</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> (<span class="id" title="var">cons_path</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">IHw</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">H</span>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">unfold</span> <span class="id" title="var">run_from</span> <span class="id" title="tactic">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">fold_left_app</span>; <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  If <span class="inlinecode"><span class="id" title="var">m</span></span> accepts <span class="inlinecode"><span class="id" title="var">w</span></span>, then there exists a path from the initial state
+  to a terminal state and reciprocally.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <span class="id" title="var">accept_path</span> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span> (<span class="id" title="var">m</span> : <span class="id" title="var">dfa</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span>) <span class="id" title="var">w</span>,<br/>
+&nbsp;&nbsp;<span class="id" title="var">accept</span> <span class="id" title="var">m</span> <span class="id" title="var">w</span> = <span class="id" title="var">true</span><br/>
+&nbsp;&nbsp;&lt;-&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">k</span>, <span class="id" title="var">is_final</span> <span class="id" title="var">m</span> <span class="id" title="var">k</span> = <span class="id" title="var">true</span> /\ <span class="id" title="var">path</span> <span class="id" title="var">m</span> (<span class="id" title="var">initial_state</span> <span class="id" title="var">m</span>) <span class="id" title="var">w</span> <span class="id" title="var">k</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">S</span> <span class="id" title="var">A</span> <span class="id" title="var">m</span> <span class="id" title="var">w</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">edestruct</span> (<span class="id" title="var">run_from_path</span> <span class="id" title="var">m</span> <span class="id" title="var">w</span> (<span class="id" title="var">initial_state</span> <span class="id" title="var">m</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">H1</span> <span class="id" title="var">H2</span>]; <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">intro</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> (<span class="id" title="var">run_from</span> <span class="id" title="var">m</span> (<span class="id" title="var">initial_state</span> <span class="id" title="var">m</span>) <span class="id" title="var">w</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; [<span class="id" title="tactic">exact</span> <span class="id" title="var">H3</span> | <span class="id" title="tactic">apply</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">reflexivity</span>].<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> [<span class="id" title="var">qf</span> [<span class="id" title="var">H3</span> <span class="id" title="var">H4</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">run_from_path</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
