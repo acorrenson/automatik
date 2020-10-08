@@ -1,2 +1,3 @@
 # automatik
-Playing with finite deterministic automata
+
+Fun with distributed algorithms and stuff in Coq
