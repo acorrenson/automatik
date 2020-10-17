@@ -1,3 +1,3 @@
 # automatik
 
-Fun with distributed algorithms and stuff in Coq
+Fun with finite state automaton in Coq
