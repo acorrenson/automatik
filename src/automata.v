@@ -1,6 +1,9 @@
 Require Import List Program PeanoNat Lia.
 Import ListNotations.
 
+(**
+  Destructing lists by postpending
+*)
 Theorem destruct_post:
   forall A (l : list A),
   {exists a l', l = l' ++ [a]} + {l = []}.
@@ -8,24 +11,16 @@ Proof.
   intros.
   induction l.
   + right. reflexivity.
-  + destruct IHl.
-    - left.
-      elim e.
-      intros.
-      elim H.
-      intros.
-      exists x.
-      exists (a :: x0).
-      simpl.
-      rewrite H0.
-      reflexivity.
-    - left.
-      exists a, [].
-      simpl.
-      subst.
-      reflexivity.
+  + destruct IHl as [ Ex | Eq]; subst; left.
+    - inversion Ex as [x [l' Hl']].
+      exists x, (a :: l').
+      rewrite Hl'. reflexivity.
+    - exists a, []. reflexivity.
 Qed.
 
+(**
+  Fact about length and app
+*)
 Lemma length_app:
   forall A (a : A) l, length l < length (l ++ [a]).
 Proof.
@@ -33,11 +28,14 @@ Proof.
   induction l; simpl; lia.
 Qed.
 
+(** 
+  New induction principle over lists
+*)
 Program Fixpoint induction_post {A}
   (P : list A -> Prop)
-  (init : forall l, l = [] -> P l)
+  (init : P [])
   (hered : forall l a, P l -> P (l ++ [a]))
-  (l : list A) {measure (length l)}: P l :=
+  (l : list A) {measure (length l)} : P l :=
   match destruct_post A l with
   | left x => _
   | right x => _
@@ -62,19 +60,19 @@ Inductive path
   (aut : Automata)
   (q0 : State) : list Alpha -> State -> Prop :=
 
-  | epsilon_transition :
+  | empty_path :
     path aut q0 [] q0
 
-  | many_transitions : forall (a : Alpha) (w : list Alpha) (q1 q2: State),
+  | cons_path : forall (a : Alpha) (w : list Alpha) (q1 q2: State),
     (transition aut q0 a q1) ->
     (path aut q1 w q2) ->
     path aut q0 (a::w) q2.
 
 Ltac valid_trans := (simpl; trivial).
+
 Ltac stabilize q := (destruct q; try contradiction).
 
-
-Lemma join_transitions :
+Lemma join_path :
   forall (A S : Type) (m : @Automata A S) (w1 w2 : list A) (q1 q2 q3 : S),
   path m q1 w1 q2 -> path m q2 w2 q3 -> path m q1 (w1 ++ w2) q3.
 Proof.
@@ -83,12 +81,13 @@ Proof.
   - simpl. inversion H. assumption.
   - simpl.
     inversion H.
-    eapply many_transitions.
+    eapply cons_path.
     * apply H3.
     * eapply IHw1.
       + apply H5.
       + assumption.
 Qed.
+
 
 Definition accept {A S : Type} (aut : @Automata A S) w :=
   exists qi qf,
@@ -125,7 +124,6 @@ Definition mon_automate := {|
 |}.
 
 
-
 Theorem test_int:
   exists (q0 q1 : states),
     path mon_automate q0 [lettre_i; lettre_n; lettre_t] q1
@@ -135,10 +133,10 @@ Proof.
   exists s1.
   exists s4.
   repeat split.
-  apply many_transitions with (q1 := s2); valid_trans.
-  apply many_transitions with (q1 := s3); valid_trans.
-  apply many_transitions with (q1 := s4); valid_trans.
-  apply epsilon_transition.
+  apply cons_path with (q1 := s2); valid_trans.
+  apply cons_path with (q1 := s3); valid_trans.
+  apply cons_path with (q1 := s4); valid_trans.
+  apply empty_path.
 Qed.
 
 
@@ -153,7 +151,6 @@ Proof.
   all: inversion H5; subst.
   stabilize q1.
 Qed.
-
 
 Inductive trans_just {A : Type} (w : list A) : nat -> A -> nat -> Prop :=
   | trans_char: forall c n,
@@ -214,16 +211,6 @@ Proof.
     erewrite nth_error_app1; assumption.
 Qed.
 
-Lemma path_cons:
-  forall A S (m : @Automata A S) (a : A) (w : list A) (q1 q2 : S),
-  path m q1 (a :: w) q2 -> exists q3, (transition m q1 a q3).
-Proof.
-  intros.
-  inversion H; subst.
-  exists q0.
-  apply H2.
-Qed.
-
 Lemma just_app_path:
   forall A  (w1 w2 w3 : list A) q1 q2,
   path (just w1) q1 w3 q2 ->
@@ -231,8 +218,8 @@ Lemma just_app_path:
 Proof.
   intros.
   induction H.
-  - apply epsilon_transition.
-  - eapply many_transitions.
+  - apply empty_path.
+  - eapply cons_path.
     + simpl. apply trans_char.
       inversion H; subst.
       apply nth_app. assumption.
@@ -257,16 +244,25 @@ Proof.
   unfold accept.
   exists 0, (length w).
   induction w using (@induction_post); repeat split; subst.
-  - apply epsilon_transition.
-  - simpl. trivial.
+  - apply empty_path.
   - inversion IHw as [Hpath _].
-    eapply join_transitions.
+    eapply join_path.
     + simpl. apply just_app_path.
       apply Hpath.
-    + eapply many_transitions.
+    + eapply cons_path.
       * simpl. apply trans_char.
         apply nth_post.
       * rewrite app_length. simpl.
-        apply epsilon_transition.
+        apply empty_path.
   - apply get_final.
 Qed.
+
+Lemma just_reject:
+  forall A (w w': list A), w <> w' -> ~(accept (just w) w').
+Proof.
+  intros T w w' Heq Contr.
+  inversion Contr as [qi [qf [Hpath [Hinit Hfinal]]]].
+  (* TODO : use a Lemma which says that if w <> w' there exists at least ONE invalid element *)
+Admitted.
+
+
