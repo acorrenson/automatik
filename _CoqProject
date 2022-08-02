@@ -1,0 +1,4 @@
+-R theories/ Automatik
+theories/operators.v
+theories/pset.v
+theories/model.v
