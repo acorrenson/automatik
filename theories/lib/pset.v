@@ -1,4 +1,4 @@
-Require Import Automatik.operators.
+Require Import Automatik.lib.operators.
 
 (** * Operations over sets *)
 

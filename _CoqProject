@@ -1,4 +1,5 @@
 -R theories/ Automatik
-theories/operators.v
-theories/pset.v
+theories/lib/operators.v
+theories/lib/pset.v
+theories/lib/sequence.v
 theories/model.v
